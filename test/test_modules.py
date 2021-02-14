@@ -4,12 +4,14 @@ import numpy.testing as npt
 import torch
 import os
 import sys
+from collections import defaultdict
+from omegaconf import DictConfig
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
 
-from src.models.base_model import BaseModel, BaseInternalLossModule
-from src.modules.PointNet.modules import PointNetSTN3D
+from torch_points3d.models.base_model import BaseModel, BaseInternalLossModule
+from torch_points3d.modules.PointNet.modules import PointNetSTN3D
 
 
 class TestPointnetModules(unittest.TestCase):
@@ -26,7 +28,7 @@ class TestPointnetModules(unittest.TestCase):
         npt.assert_array_equal(np.asarray(pos.detach()), np.asarray(trans_pos.detach()))
 
 
-class MockLossModule(torch.nn.Module, BaseInternalLossModule):
+class MockLossModule(BaseInternalLossModule):
     def __init__(self, internal_losses):
         super().__init__()
         self.internal_losses = internal_losses
@@ -37,7 +39,7 @@ class MockLossModule(torch.nn.Module, BaseInternalLossModule):
 
 class MockModel(BaseModel):
     def __init__(self):
-        super().__init__({})
+        super().__init__(DictConfig({"conv_type": "dummy"}))
 
         self.model1 = MockLossModule({"mock_loss_1": torch.tensor(0.5), "mock_loss_2": torch.tensor(0.3),})
 
@@ -50,8 +52,13 @@ class TestInternalLosses(unittest.TestCase):
 
     def test_get_named_internal_losses(self):
 
+        d = defaultdict(list)
+        d["mock_loss_1"].append(torch.tensor(0.5))
+        d["mock_loss_2"].append(torch.tensor(0.3))
+        d["mock_loss_3"].append(torch.tensor(1.0))
+
         lossDict = self.model.get_named_internal_losses()
-        self.assertEqual(lossDict, {"mock_loss_3": 1, "mock_loss_1": 0.5, "mock_loss_2": 0.3})
+        self.assertEqual(lossDict, d)
 
     def test_get_internal_loss(self):
 

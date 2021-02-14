@@ -4,10 +4,18 @@ data:
     dataroot: data
     fold: 5
     class_weight_method: "sqrt"
-    room_points: 32768
-    num_points: 4096
-    first_subsampling: 0.04
-    pre_transforms:
-        - transform: GridSampling
+    use_category: False
+    train_transforms:
+        - transform: FixedPoints
+          lparams: [4096]
+        - transform: RandomTranslate
           params:
-              size: ${data.first_subsampling}
+              translate: 0.01
+        - transform: RandomRotate
+          params:
+              degrees: 180
+              axis: 2
+
+    test_transforms:
+        - transform: FixedPoints
+          lparams: [4096]

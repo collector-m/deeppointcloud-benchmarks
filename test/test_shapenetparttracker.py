@@ -6,7 +6,7 @@ import sys
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
 
-from src.metrics.shapenet_part_tracker import ShapenetPartTracker
+from torch_points3d.metrics.shapenet_part_tracker import ShapenetPartTracker
 
 
 class MockDataset:
@@ -27,6 +27,7 @@ class MockModel:
         ]
         self.labels = [np.asarray([1, 1]), np.asarray([2, 2]), np.asarray([3])]
         self.batch_idx = [np.asarray([0, 1]), np.asarray([0, 1]), np.asarray([0])]
+        self.conv_type = "DENSE"
 
     def get_output(self):
         return self.outputs[self.iter]
@@ -37,7 +38,7 @@ class MockModel:
     def get_current_losses(self):
         return self.losses[self.iter]
 
-    def get_batch_idx(self):
+    def get_batch(self):
         return self.batch_idx[self.iter]
 
 
