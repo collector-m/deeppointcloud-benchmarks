@@ -171,6 +171,9 @@ class Patch3DMatch(Base3DMatch):
             size_dataset = size_dataset // 2
         return size_dataset
 
+    def len(self):
+        return len(self)
+
 
 class Fragment3DMatch(Base3DMatch, GeneralFragment):
     r"""
@@ -290,6 +293,9 @@ class Fragment3DMatch(Base3DMatch, GeneralFragment):
     def __len__(self):
         return len(self.list_fragment)
 
+    def len(self):
+        return len(self)
+
     def process(self):
         super().process()
 
@@ -388,5 +394,6 @@ class General3DMatchDataset(BaseSiameseDataset):
                 pre_transform=pre_transform,
                 transform=test_transform,
                 num_pos_pairs=50,
-                max_dist_overlap=dataset_opt.max_dist_overlap
+                max_dist_overlap=dataset_opt.max_dist_overlap,
+                self_supervised=False
             )

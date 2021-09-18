@@ -11,6 +11,7 @@ from torch_points3d.datasets.registration.detector import RandomDetector
 from torch_points3d.datasets.registration.pair import Pair, MultiScalePair
 from torch_points3d.datasets.registration.utils import tracked_matches
 from torch_points3d.datasets.registration.base_siamese_dataset import GeneralFragment
+from torch_points3d.datasets.registration.base_siamese_dataset import BaseSiameseDataset
 
 
 class Test3DMatch(Base3DMatchTest):
@@ -66,6 +67,9 @@ class Test3DMatch(Base3DMatchTest):
     def __len__(self):
         return len(self.table)
 
+    def len(self):
+        return len(self)
+
     def get_table(self):
         return self.table
 
@@ -79,6 +83,11 @@ class TestPair3DMatch(Base3DMatchTest, GeneralFragment):
                  debug=False,
                  num_pos_pairs=200,
                  max_dist_overlap=0.01,
+                 self_supervised=False,
+                 ss_transform=None,
+                 min_size_block=0.3,
+                 max_size_block=2,
+                 min_points=500,
                  use_fps=False):
         Base3DMatchTest.__init__(self, root=root,
                                  transform=transform,
@@ -89,9 +98,13 @@ class TestPair3DMatch(Base3DMatchTest, GeneralFragment):
         self.num_pos_pairs = num_pos_pairs
         self.path_match = osp.join(self.processed_dir, "test", "matches")
         self.list_fragment = [f for f in os.listdir(self.path_match) if "matches" in f]
-        self.self_supervised = False
+        self.self_supervised = self_supervised
+        self.ss_transform = ss_transform
         self.is_online_matching = False
         self.use_fps = use_fps
+        self.min_points = min_points
+        self.min_size_block = min_size_block
+        self.max_size_block = max_size_block
 
     def __getitem__(self, idx):
         return self.get_fragment(idx)
@@ -99,12 +112,45 @@ class TestPair3DMatch(Base3DMatchTest, GeneralFragment):
     def __len__(self):
         return len(self.list_fragment)
 
+    def len(self):
+        return len(self)
+
     def process(self):
         super().process()
 
     def download(self):
         super().download()
 
+class TestPair3DMatchDataset(BaseSiameseDataset):
+    def __init__(self, dataset_opt):
+        super().__init__(dataset_opt)
+        pre_transform = self.pre_transform
+        ss_transform = getattr(self, "ss_transform", None)
+        train_transform = self.train_transform
+        test_transform = self.test_transform
+
+        self.train_dataset = TestPair3DMatch(
+            root=self._data_path,
+            pre_transform=pre_transform,
+            transform=train_transform,
+            num_pos_pairs=dataset_opt.num_pos_pairs,
+            max_dist_overlap=dataset_opt.max_dist_overlap,
+            self_supervised=True,
+            min_size_block=dataset_opt.min_size_block,
+            max_size_block=dataset_opt.max_size_block,
+            ss_transform=ss_transform,
+            min_points=dataset_opt.min_points,
+            use_fps=dataset_opt.use_fps
+        )
+
+        self.test_dataset = TestPair3DMatch(
+                root=self._data_path,
+                pre_transform=pre_transform,
+                transform=test_transform,
+                num_pos_pairs=50,
+                max_dist_overlap=dataset_opt.max_dist_overlap,
+                self_supervised=False
+            )
 
 class Test3DMatchDataset(BaseDataset):
     """

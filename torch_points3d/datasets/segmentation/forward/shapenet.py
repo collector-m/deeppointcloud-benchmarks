@@ -40,6 +40,9 @@ class _ForwardShapenet(torch.utils.data.Dataset):
     def __len__(self):
         return len(self._files)
 
+    def len(self):
+        return len(self)
+
     def _read_file(self, filename):
         raw = read_txt_array(filename)
         pos = raw[:, :3]
@@ -110,7 +113,8 @@ class ForwardShapenetDataset(BaseDataset):
         )
 
         self._data_path = dataset_opt.dataroot
-        include_normals = dataset_opt.include_normals if dataset_opt.include_normals else True
+        # include_normals = dataset_opt.include_normals if dataset_opt.include_normals else True
+        include_normals = dataset_opt.get('include_normals', True)  # Update to OmegaConf 2.0
 
         transforms = SaveOriginalPosId()
         for t in [self.pre_transform, self.test_transform]:
